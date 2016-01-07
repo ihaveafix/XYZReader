@@ -18,8 +18,11 @@
 <resources>
     <color name="photo_placeholder">#ccc</color>
 
-    <color name="theme_primary">#04561A</color>
-    <color name="theme_primary_dark">#04561A</color>
-    <color name="theme_accent">#04561A</color>
-    <color name="ltgray">#ffe0e0e0</color>
+    <color name="turquoise_400">#50B9B2</color>
+    <color name="turquoise_700">#327C77</color>
+    <color name="orange_a400">#FF6B00</color>
+    <color name="turquoise_200">#99D6D2</color>
+
+    <color name="primary_text">#1D2629</color>
+    <color name="white">#ffff</color>
 </resources>
