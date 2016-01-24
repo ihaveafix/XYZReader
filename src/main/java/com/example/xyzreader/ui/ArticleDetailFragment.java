@@ -218,6 +218,10 @@ public class ArticleDetailFragment extends Fragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+
+        //Call to start animation since the fragment view is ready
+        ( (ArticleDetailActivity)getActivity()).scheduleStartPostponedTransition(mPhotoView);
+
         if (!isAdded()) {
             if (cursor != null) {
                 cursor.close();

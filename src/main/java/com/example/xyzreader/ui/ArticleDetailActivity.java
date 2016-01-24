@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 
 import com.example.xyzreader.R;
@@ -43,6 +44,10 @@ public class ArticleDetailActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //Postpone the animation until fragment is gotten
+        postponeEnterTransition();
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
@@ -84,7 +89,8 @@ public class ArticleDetailActivity extends AppCompatActivity
         mUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onSupportNavigateUp();
+                //Changed from onSupportNavigationUp() to onBackPressed for animation
+                onBackPressed();
             }
         });
 
@@ -120,6 +126,19 @@ public class ArticleDetailActivity extends AppCompatActivity
             }
         }
 
+    }
+
+    //Get ViewTreeObserver to see when fragment view is ready
+    public void scheduleStartPostponedTransition(final View sharedElement) {
+        sharedElement.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        sharedElement.getViewTreeObserver().removeOnPreDrawListener(this);
+                        startPostponedEnterTransition();
+                        return true;
+                    }
+                });
     }
 
     @Override

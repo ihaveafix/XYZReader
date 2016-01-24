@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+    <!--app:sharedElementTransitions="true"-->
 
     <!--https://guides.codepath.com/android/Handling-Scrolls-with-CoordinatorLayout-->
     <android.support.design.widget.AppBarLayout
@@ -18,7 +19,6 @@
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
             app:layout_scrollFlags= "scroll|exitUntilCollapsed">
-            <!--app:contentScrim="?attr/colorPrimary"-->
 
 
             <android.support.v7.widget.Toolbar
@@ -60,7 +60,6 @@
             android:paddingRight="@dimen/list_side_margin"
             android:scrollbarStyle="outsideOverlay"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-        <!--android:paddingTop="116dp"-->
     </android.support.v4.widget.SwipeRefreshLayout>
 
 
