@@ -90,6 +90,7 @@ public class ArticleDetailActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 //Changed from onSupportNavigationUp() to onBackPressed for animation
+                //This is for the toolbar back button on the top left corner
                 onBackPressed();
             }
         });
@@ -120,6 +121,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         }
 
         if (savedInstanceState == null) {
+            //This is where it's getting the intent with the data
             if (getIntent() != null && getIntent().getData() != null) {
                 mStartId = ItemsContract.Items.getItemId(getIntent().getData());
                 mSelectedItemId = mStartId;
@@ -128,7 +130,8 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     }
 
-    //Get ViewTreeObserver to see when fragment view is ready
+    //Get ViewTreeObserver to see when fragment view is ready for animation
+    //Make sure to call this method in the fragment, onLoadFinished or the app just hangs
     public void scheduleStartPostponedTransition(final View sharedElement) {
         sharedElement.getViewTreeObserver().addOnPreDrawListener(
                 new ViewTreeObserver.OnPreDrawListener() {
@@ -203,7 +206,8 @@ public class ArticleDetailActivity extends AppCompatActivity
         @Override
         public Fragment getItem(int position) {
             mCursor.moveToPosition(position);
-            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
+            //Adding in the position as well so that position is passed in for creation of the fragment
+            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID), position);
         }
 
         @Override

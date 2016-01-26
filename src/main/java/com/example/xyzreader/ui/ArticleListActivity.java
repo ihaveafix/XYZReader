@@ -16,6 +16,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -154,12 +155,12 @@ public class ArticleListActivity extends AppCompatActivity implements
                 @Override
                 public void onClick(View view) {
                     if (Build.VERSION.SDK_INT >= 21){
-                        //The imageView is found for this view
+                        //The imageView is found for this view, which is the shared element item
                         ImageView sharedView = (ImageView) view.findViewById(R.id.thumbnail);
 
                         Intent intent = new Intent(Intent.ACTION_VIEW,
                                 ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
-
+                        Log.i("Shared name", sharedView.getTransitionName());
                         //For scene transition animation
                         ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(ArticleListActivity.this,
                                 sharedView, sharedView.getTransitionName());
@@ -180,6 +181,11 @@ public class ArticleListActivity extends AppCompatActivity implements
         public void onBindViewHolder(ViewHolder holder, int position) {
             mCursor.moveToPosition(position);
             holder.titleView.setText(mCursor.getString(ArticleLoader.Query.TITLE));
+
+            //Setting the transition name for the shared element transition and adding
+            //the position to make the transition name unique.
+            holder.thumbnailView.setTransitionName(getString(R.string.transition_photo) + position);
+            Log.i("From ListActivity", getString(R.string.transition_photo) +position);
             holder.subtitleView.setText(
                     DateUtils.getRelativeTimeSpanString(
                             mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
@@ -191,6 +197,12 @@ public class ArticleListActivity extends AppCompatActivity implements
                     mCursor.getString(ArticleLoader.Query.THUMB_URL),
                     ImageLoaderHelper.getInstance(ArticleListActivity.this).getImageLoader());
             holder.thumbnailView.setAspectRatio(mCursor.getFloat(ArticleLoader.Query.ASPECT_RATIO));
+/**From Advanced android class video but not working**/
+//            // This enables better animations, even if we lose state due to a device rotation,
+//            // the animator can use this to re-find the original view
+//            String transitionName = "transitionViewPhoto" + position;
+//            ViewCompat.setTransitionName(holder.thumbnailView, transitionName);
+//            holder.thumbnailView.setTag(transitionName);
         }
 
         @Override
