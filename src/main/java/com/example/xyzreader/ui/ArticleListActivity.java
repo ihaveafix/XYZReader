@@ -36,9 +36,17 @@ import com.example.xyzreader.data.UpdaterService;
 public class ArticleListActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor> {
 
+    public static final String EXTRA_CURRENT_POS = "extra_current_position";
+    public static final String EXTRA_PREV_POS = "extra_previous_position";
+    public static final String THUMBNAIL_TRANSITION = "thumbnailView";
+
     private Toolbar mToolbar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mRecyclerView;
+
+    private int mCurrentPosition;
+    private int mPreviousPosition;
+    boolean mReentering = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,26 +59,17 @@ public class ArticleListActivity extends AppCompatActivity implements
         final View toolbarContainerView = findViewById(R.id.appBar_container);
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh_layout);
-//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener(){
-//
-//            @Override
-//            public void onRefresh() {
-//                new CountDownTimer(1500, 0 ){
-//
-//                    @Override
-//                    public void onTick(long millisUntilFinished) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onFinish() {
-//                        mSwipeRefreshLayout.setRefreshing(false);
-//
-//                    }
-//                }.start();
-//
-//            }
-//        });
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                //To take care of the refresh icon so that it won't continually turn.
+                if (mRecyclerView.getChildCount() > 0) {
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
+            }
+        });
+
+//        setExitSharedElementCallback(sharedElementCallback);
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         getLoaderManager().initLoader(0, null, this);
@@ -80,6 +79,63 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
     }
 
+    //Catch the Intent of the supportFinishAfterTransition() with it's results for animation purpose
+    @Override
+    public void onActivityReenter(int resultCode, Intent data) {
+        super.onActivityReenter(resultCode, data);
+        mReentering = true;
+        //Get the intent for the current position and set it to mCurrentPosition
+        mCurrentPosition = data.getIntExtra(EXTRA_CURRENT_POS, 0);
+        mPreviousPosition = data.getIntExtra(EXTRA_PREV_POS, 0);
+        Log.i("ActivityReenter pos", String.valueOf(mCurrentPosition));
+        //Check the scroll position and make it be at the current position
+        if (mCurrentPosition != mPreviousPosition) {
+            mRecyclerView.scrollToPosition(mCurrentPosition);
+        }
+//        postponeEnterTransition();
+//        scheduleStartPostponedTransition();
+    }
+//
+//    //Get ViewTreeObserver to see when fragment view is ready for animation
+//    //Make sure to call this method in the fragment, onLoadFinished or the app just hangs
+//    public void scheduleStartPostponedTransition() {
+//        mRecyclerView.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+//            @Override
+//            public boolean onPreDraw() {
+//                mRecyclerView.getViewTreeObserver().removeOnPreDrawListener(this);
+//                startPostponedEnterTransition();
+//                return true;
+//            }
+//        });
+//    }
+//
+//    //Using this method for share element transition
+//    SharedElementCallback sharedElementCallback = new SharedElementCallback() {
+//        @Override
+//        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+//            super.onMapSharedElements(names, sharedElements);
+//            if (mReentering) {
+//                String newTransitionName = THUMBNAIL_TRANSITION + mCurrentPosition;
+////                String oldTransitionName = THUMBNAIL_TRANSITION + mPreviousPosition;
+////                Log.i("oldTransitionName", oldTransitionName);
+//                Log.i("newTransitionName", newTransitionName);
+////            View newSharedView = mRecyclerView.findViewWithTag(newTransitionName);
+////            if(newSharedView !=null){
+//                RecyclerView.ViewHolder holder = mRecyclerView.findViewHolderForAdapterPosition(mCurrentPosition);
+//
+//                View view = holder.itemView.findViewById(R.id.thumbnail);
+////                View view = mRecyclerView.findViewById(R.id.thumbnail);
+////                view.setTransitionName(getString(R.string.transition_photo));
+//                names.clear();
+//                names.add(newTransitionName);
+//                sharedElements.clear();
+//                sharedElements.put(newTransitionName, view);
+////            }
+//                mReentering = false;
+//            }
+//        }
+//    };
+//
     private void refresh() {
         startService(new Intent(this, UpdaterService.class));
     }
@@ -154,23 +210,23 @@ public class ArticleListActivity extends AppCompatActivity implements
             view.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (Build.VERSION.SDK_INT >= 21){
+                    if (Build.VERSION.SDK_INT >= 21) {
                         //The imageView is found for this view, which is the shared element item
                         ImageView sharedView = (ImageView) view.findViewById(R.id.thumbnail);
 
                         Intent intent = new Intent(Intent.ACTION_VIEW,
                                 ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition())));
                         Log.i("Shared name", sharedView.getTransitionName());
+                        Log.i("Intent position", String.valueOf(vh.getAdapterPosition()));
                         //For scene transition animation
                         ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(ArticleListActivity.this,
                                 sharedView, sharedView.getTransitionName());
 
                         //Start activity with the intent and the options bundle
                         startActivity(intent, options.toBundle());
-                    }
-                    else {
-                    startActivity(new Intent(Intent.ACTION_VIEW,
-                            ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
+                    } else {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                ItemsContract.Items.buildItemUri(getItemId(vh.getAdapterPosition()))));
                     }
                 }
             });
@@ -185,7 +241,7 @@ public class ArticleListActivity extends AppCompatActivity implements
             //Setting the transition name for the shared element transition and adding
             //the position to make the transition name unique.
             holder.thumbnailView.setTransitionName(getString(R.string.transition_photo) + position);
-            Log.i("From ListActivity", getString(R.string.transition_photo) +position);
+            Log.i("From ListActivity", getString(R.string.transition_photo) + position);
             holder.subtitleView.setText(
                     DateUtils.getRelativeTimeSpanString(
                             mCursor.getLong(ArticleLoader.Query.PUBLISHED_DATE),
@@ -200,9 +256,10 @@ public class ArticleListActivity extends AppCompatActivity implements
 /**From Advanced android class video but not working**/
 //            // This enables better animations, even if we lose state due to a device rotation,
 //            // the animator can use this to re-find the original view
-//            String transitionName = "transitionViewPhoto" + position;
+//            String transitionName = THUMBNAIL_TRANSITION + position;
 //            ViewCompat.setTransitionName(holder.thumbnailView, transitionName);
 //            holder.thumbnailView.setTag(transitionName);
+//            Log.i("From ListActivity", transitionName);
         }
 
         @Override

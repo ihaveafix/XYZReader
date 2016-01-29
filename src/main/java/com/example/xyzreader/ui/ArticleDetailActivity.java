@@ -13,6 +13,7 @@ import android.support.v13.app.FragmentStatePagerAdapter;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,9 @@ import android.view.WindowInsets;
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
+
+import static com.example.xyzreader.ui.ArticleListActivity.EXTRA_CURRENT_POS;
+import static com.example.xyzreader.ui.ArticleListActivity.EXTRA_PREV_POS;
 
 /**
  * An activity representing a single Article detail screen, letting you swipe between articles.
@@ -41,12 +45,17 @@ public class ArticleDetailActivity extends AppCompatActivity
     private View mUpButtonContainer;
     private View mUpButton;
 
+    private int mCurrentPosition;
+    private int mOriginalPosition;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         //Postpone the animation until fragment is gotten
         postponeEnterTransition();
+
+//        setEnterSharedElementCallback(sharedElementCallback);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().getDecorView().setSystemUiVisibility(
@@ -79,7 +88,13 @@ public class ArticleDetailActivity extends AppCompatActivity
                     mCursor.moveToPosition(position);
                 }
                 mSelectedItemId = mCursor.getLong(ArticleLoader.Query._ID);
+                //This is the position of the fragment, when swiped, it changes the fragment
+                Log.i("position", String.valueOf(position));
                 updateUpButtonPosition();
+
+                //Setting the current position so that this can be passed into intent back to ArticleListActivity
+                //for the supportFinishAfterTransition() for animation purposes
+                mCurrentPosition = position;
             }
         });
 
@@ -161,6 +176,8 @@ public class ArticleDetailActivity extends AppCompatActivity
             while (!mCursor.isAfterLast()) {
                 if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
                     final int position = mCursor.getPosition();
+                    mOriginalPosition=position;
+                    Log.i("mStartId position", String.valueOf(position));
                     mPager.setCurrentItem(position, false);
                     break;
                 }
@@ -187,8 +204,38 @@ public class ArticleDetailActivity extends AppCompatActivity
         int upButtonNormalBottom = mTopInset + mUpButton.getHeight();
         mUpButton.setTranslationY(Math.min(mSelectedItemUpButtonFloor - upButtonNormalBottom, 0));
     }
+//
+//    SharedElementCallback sharedElementCallback = new SharedElementCallback() {
+//        @Override
+//        public void onMapSharedElements(List<String> names, Map<String, View> sharedElements) {
+//            super.onMapSharedElements(names, sharedElements);
+//
+//            View sharedView = mPagerAdapter.mCurrentFragment.mPhotoView;
+//            if (sharedView != null) {
+//                names.clear();
+//                names.add(sharedView.getTransitionName());
+//                sharedElements.clear();
+//                sharedElements.put(sharedView.getTransitionName(), sharedView);
+//            }
+//        }
+//    };
+
+
+    @Override
+    public void supportFinishAfterTransition() {
+        Intent info = new Intent();
+        //Key value pair with key and the current position
+        info.putExtra(EXTRA_CURRENT_POS, mCurrentPosition);
+        //Key value pair with key and the original position
+        info.putExtra(EXTRA_PREV_POS, mOriginalPosition);
+        setResult(RESULT_OK,info);
+        super.supportFinishAfterTransition();
+    }
 
     private class MyPagerAdapter extends FragmentStatePagerAdapter {
+
+        public ArticleDetailFragment mCurrentFragment;
+
         public MyPagerAdapter(FragmentManager fm) {
             super(fm);
         }
@@ -197,6 +244,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         public void setPrimaryItem(ViewGroup container, int position, Object object) {
             super.setPrimaryItem(container, position, object);
             ArticleDetailFragment fragment = (ArticleDetailFragment) object;
+//            mCurrentFragment = fragment;
             if (fragment != null) {
                 mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
                 updateUpButtonPosition();

@@ -47,12 +47,13 @@ public class ArticleDetailFragment extends Fragment implements
 
     private int mTopInset;
     private View mPhotoContainerView;
-    private ImageView mPhotoView;
+    public ImageView mPhotoView;
     private int mScrollY;
     private boolean mIsCard = false;
     private int mStatusBarFullOpacityBottom;
     private static final String ARG_POSITION = "transition_string_position";
     private int mViewPagerPosition;
+
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
